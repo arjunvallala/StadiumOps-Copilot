@@ -25,6 +25,10 @@ function checkRateLimit() {
 // Model identifier
 const GEMINI_MODEL = 'gemini-3.5-flash';
 
+function getApiKey() {
+  return process.env.GEMINI_API_KEY;
+}
+
 /**
  * Uses Gemini API to classify ambiguous incident reports.
  * 
@@ -41,7 +45,7 @@ export async function classifyAmbiguousIncident(text) {
     };
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = getApiKey();
   if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
     return {
       category: 'other',
@@ -124,7 +128,7 @@ export async function translateText(text, targetLanguage) {
     };
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = getApiKey();
   if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
     return {
       translation: `[Translation key not configured] ${text}`,

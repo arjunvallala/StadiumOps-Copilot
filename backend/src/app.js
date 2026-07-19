@@ -14,14 +14,6 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50kb' })); // Restrict payload size
 
-// Middleware for Netlify serverless routing compatibility
-app.use((req, res, next) => {
-  if (req.url.startsWith('/.netlify/functions/api')) {
-    req.url = req.url.replace('/.netlify/functions/api', '/api');
-  }
-  next();
-});
-
 // Memory stores initialized from pure JS module
 let gatesStore = [...initialGates];
 let incidentsStore = [...initialIncidents];
@@ -41,20 +33,21 @@ function getFluctuatedGates() {
   return gatesStore;
 }
 
-// ROUTES
+// Router containing all API routes
+const router = express.Router();
 
 // Health Check
-app.get('/api/health', (req, res) => {
+router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// GET /api/incidents - Retrieve triaged incidents
-app.get('/api/incidents', (req, res) => {
+// GET /incidents - Retrieve triaged incidents
+router.get('/incidents', (req, res) => {
   res.json({ success: true, count: incidentsStore.length, data: incidentsStore });
 });
 
-// POST /api/incident/triage - Triage a free-text incident report
-app.post('/api/incident/triage', async (req, res) => {
+// POST /incident/triage - Triage a free-text incident report
+router.post('/incident/triage', async (req, res) => {
   try {
     const { text } = req.body;
 
@@ -104,8 +97,8 @@ app.post('/api/incident/triage', async (req, res) => {
   }
 });
 
-// GET /api/gates - Get real-time crowd advisory data for all gates
-app.get('/api/gates', (req, res) => {
+// GET /gates - Get real-time crowd advisory data for all gates
+router.get('/gates', (req, res) => {
   try {
     const updatedGates = getFluctuatedGates();
     const advisories = analyzeGateAdvisories(updatedGates);
@@ -120,8 +113,8 @@ app.get('/api/gates', (req, res) => {
   }
 });
 
-// POST /api/gates/update - Simulate manual gate occupancy override
-app.post('/api/gates/update', (req, res) => {
+// POST /gates/update - Simulate manual gate occupancy override
+router.post('/gates/update', (req, res) => {
   try {
     const { id, occupancy } = req.body;
     if (!id || typeof occupancy !== 'number') {
@@ -143,8 +136,8 @@ app.post('/api/gates/update', (req, res) => {
   }
 });
 
-// POST /api/translate - Multilingual Fan Communication Helper
-app.post('/api/translate', async (req, res) => {
+// POST /translate - Multilingual Fan Communication Helper
+router.post('/translate', async (req, res) => {
   try {
     const { text, targetLanguage } = req.body;
 
@@ -174,8 +167,8 @@ app.post('/api/translate', async (req, res) => {
   }
 });
 
-// GET /api/shifts - Retrieve volunteer shift positioning suggestions
-app.get('/api/shifts', (req, res) => {
+// GET /shifts - Retrieve volunteer shift positioning suggestions
+router.get('/shifts', (req, res) => {
   try {
     const phase = req.query.phase || 'pre-match';
     const advisories = analyzeGateAdvisories(gatesStore);
@@ -191,5 +184,10 @@ app.get('/api/shifts', (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to generate shift suggestions.' });
   }
 });
+
+// Mount router on all potential Netlify and local path prefixes
+app.use('/api', router);
+app.use('/.netlify/functions/api', router);
+app.use('/', router);
 
 export default app;
