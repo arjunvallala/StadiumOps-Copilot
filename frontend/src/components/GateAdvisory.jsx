@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { fetchGates, updateGateOccupancy } from '../api/client.js';
 
+/**
+ * Gate & Crowd Advisory Dashboard component.
+ * Displays real-time gate telemetry, queue status warnings, and surge simulation controls.
+ * 
+ * @returns {JSX.Element}
+ */
 export default function GateAdvisory() {
   const [gates, setGates] = useState([]);
   const [loading, setLoading] = useState(true);

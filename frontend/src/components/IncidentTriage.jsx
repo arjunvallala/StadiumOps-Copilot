@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { submitIncident, fetchIncidents } from '../api/client.js';
 
+/**
+ * Incident Triage Engine component.
+ * Allows stadium staff to submit free-text incident reports and view the live triaged feed.
+ * Features ARIA live announcements, category filtering, and transparent reasoning cards.
+ * 
+ * @returns {JSX.Element}
+ */
 export default function IncidentTriage() {
   const [reportText, setReportText] = useState('');
   const [incidents, setIncidents] = useState([]);

@@ -1,3 +1,12 @@
+/**
+ * Header component displaying branding, system online status badge, and accessible navigation tabs.
+ * 
+ * @param {Object} props
+ * @param {'triage' | 'gates' | 'translate' | 'shifts'} props.activeTab - Currently active navigation tab
+ * @param {(tab: string) => void} props.setActiveTab - Tab switching callback handler
+ * @param {boolean} props.systemOnline - Live backend API server connection status
+ * @returns {JSX.Element}
+ */
 export default function Header({ activeTab, setActiveTab, systemOnline }) {
   const navItems = [
     { id: 'triage', label: 'Incident Triage', icon: '🚨' },
