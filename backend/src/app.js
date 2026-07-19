@@ -6,10 +6,7 @@ import { classifyIncidentRules } from './logic/incidentClassifier.js';
 import { analyzeGateAdvisories } from './logic/gateAdvisory.js';
 import { getShiftSuggestions } from './logic/shiftSuggestions.js';
 import { classifyAmbiguousIncident, translateText } from './services/llm.js';
-
-// Static JSON imports - bundled directly into serverless builds
-import initialGates from './data/gates.json' assert { type: 'json' };
-import initialIncidents from './data/incidents.json' assert { type: 'json' };
+import { initialGates, initialIncidents } from './data/initialData.js';
 
 const app = express();
 
@@ -25,9 +22,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Memory stores initialized from bundled JSON
-let gatesStore = Array.isArray(initialGates) ? [...initialGates] : [];
-let incidentsStore = Array.isArray(initialIncidents) ? [...initialIncidents] : [];
+// Memory stores initialized from pure JS module
+let gatesStore = [...initialGates];
+let incidentsStore = [...initialIncidents];
 
 // Helper to apply subtle dynamic fluctuations for telemetry simulation
 function getFluctuatedGates() {
