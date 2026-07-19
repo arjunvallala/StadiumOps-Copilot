@@ -133,6 +133,12 @@ npm run test
 npm run coverage --prefix backend
 ```
 
+### Code Quality Practices
+- **Consistent JSDoc Coverage**: All exported functions in `/backend/src` and key React components in `/frontend/src` feature comprehensive JSDoc annotations with parameter and return types, plus `@typedef` declarations in [`utils.js`](file:///c:/Users/valla/OneDrive/Desktop/challenge%204/backend/src/logic/utils.js).
+- **Single-Responsibility Function Refactors**: All rule processing, gate advisory evaluations, shift positioning algorithms, and LLM requests are split into single-purpose functions under 25 lines.
+- **Shared Utility Extraction**: Common classification formatting and keyword matching logic extracted into a shared [`utils.js`](file:///c:/Users/valla/OneDrive/Desktop/challenge%204/backend/src/logic/utils.js) module without DRY over-abstraction.
+- **Standardized Error Response Shape**: Uniform REST API response contract `{ success: false, error: string, code: string }` enforced across all endpoints in [`app.js`](file:///c:/Users/valla/OneDrive/Desktop/challenge%204/backend/src/app.js).
+
 ---
 
 ## 6. Local Setup & Execution
