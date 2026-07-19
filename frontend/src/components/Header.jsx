@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function Header({ activeTab, setActiveTab, systemOnline }) {
   const navItems = [
     { id: 'triage', label: 'Incident Triage', icon: '🚨' },

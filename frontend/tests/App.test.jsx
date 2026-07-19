@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import React from 'react';
 import Header from '../src/components/Header.jsx';
 import Footer from '../src/components/Footer.jsx';
 

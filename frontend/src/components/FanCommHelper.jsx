@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { translateMessage } from '../api/client.js';
 
 export default function FanCommHelper() {
@@ -84,7 +84,7 @@ export default function FanCommHelper() {
                 onClick={() => setText(phrase)}
                 className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors text-left"
               >
-                "{phrase}"
+                &quot;{phrase}&quot;
               </button>
             ))}
           </div>

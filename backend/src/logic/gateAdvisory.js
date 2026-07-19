@@ -19,7 +19,7 @@ export function analyzeGateAdvisories(gates) {
   }
 
   return gates.map(gate => {
-    const { name, occupancy, trend } = gate;
+    const { occupancy, trend } = gate;
     let status = 'normal';
     let action = 'Maintain normal operations.';
     let explanation = `Gate occupancy is at ${occupancy}%, which is within safe operating limits under normal flow conditions.`;

@@ -23,14 +23,15 @@ afterAll(() => {
 });
 
 describe('Express API Integration Tests', () => {
-  it('GET /api/health should return ok status', async () => {
+  it('GET /api/health should return ok status and ISO timestamp', async () => {
     const res = await fetch(`${baseUrl}/api/health`);
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.status).toBe('ok');
+    expect(json.timestamp).toBeDefined();
   });
 
-  it('GET /api/incidents should return pre-loaded sample incidents', async () => {
+  it('GET /api/incidents should return pre-loaded sample incidents array', async () => {
     const res = await fetch(`${baseUrl}/api/incidents`);
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -39,7 +40,7 @@ describe('Express API Integration Tests', () => {
     expect(json.data.length).toBeGreaterThan(0);
   });
 
-  it('POST /api/incident/triage should triage medical incident correctly', async () => {
+  it('POST /api/incident/triage should triage medical incident correctly with status 201', async () => {
     const res = await fetch(`${baseUrl}/api/incident/triage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -53,7 +54,7 @@ describe('Express API Integration Tests', () => {
     expect(json.data.source).toBe('rule-engine');
   });
 
-  it('POST /api/incident/triage should reject invalid/empty inputs with 400', async () => {
+  it('POST /api/incident/triage should reject empty or non-string inputs with status 400', async () => {
     const res = await fetch(`${baseUrl}/api/incident/triage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -62,9 +63,10 @@ describe('Express API Integration Tests', () => {
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(json.success).toBe(false);
+    expect(json.error).toContain('required');
   });
 
-  it('GET /api/gates should return analyzed gate advisories', async () => {
+  it('GET /api/gates should return analyzed gate advisories with correct properties', async () => {
     const res = await fetch(`${baseUrl}/api/gates`);
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -74,21 +76,47 @@ describe('Express API Integration Tests', () => {
     expect(json.data[0]).toHaveProperty('explanation');
   });
 
-  it('POST /api/translate should validate targetLanguage presence', async () => {
+  it('POST /api/gates/update should allow manual gate occupancy override', async () => {
+    const res = await fetch(`${baseUrl}/api/gates/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'gate-a', occupancy: 95 })
+    });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.success).toBe(true);
+    const gateA = json.data.find(g => g.id === 'gate-a');
+    expect(gateA.occupancy).toBe(95);
+    expect(gateA.status).toBe('critical');
+  });
+
+  it('POST /api/translate should validate required parameters and return 400 if missing', async () => {
     const res = await fetch(`${baseUrl}/api/translate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: 'Hello' })
     });
     expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.success).toBe(false);
   });
 
-  it('GET /api/shifts should return shift positioning suggestions', async () => {
+  it('GET /api/shifts should return shift positioning suggestions for halftime phase', async () => {
     const res = await fetch(`${baseUrl}/api/shifts?phase=halftime`);
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.success).toBe(true);
     expect(json.data.phase).toBe('halftime');
     expect(Array.isArray(json.data.suggestions)).toBe(true);
+  });
+
+  it('GET /api/sustainability-transit should return waste and shuttle advisories', async () => {
+    const res = await fetch(`${baseUrl}/api/sustainability-transit?phase=post-match`);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.success).toBe(true);
+    expect(json.data.phase).toBe('post-match');
+    expect(json.data.sustainability.level).toBe('high-surge');
+    expect(json.data.transportation.shuttleStatus).toBe('peak-frequency');
   });
 });

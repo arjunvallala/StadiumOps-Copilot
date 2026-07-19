@@ -79,6 +79,24 @@ describe('Incident Classification Rules Engine', () => {
     expect(result.classification.explanation).toContain('Rule Match (Facilities-Low)');
   });
 
+  it('should handle uppercase, padded, and mixed punctuation inputs correctly', () => {
+    const report = '   ALERT: FAN COLLAPSED NEAR GATE 2!!!  ';
+    const result = classifyIncidentRules(report);
+
+    expect(result.matches).toBe(true);
+    expect(result.classification.category).toBe('medical');
+    expect(result.classification.severity).toBe('critical');
+  });
+
+  it('should prioritize critical medical rule when multiple keywords collide', () => {
+    const report = 'A fan collapsed during a fight near turnstiles';
+    const result = classifyIncidentRules(report);
+
+    expect(result.matches).toBe(true);
+    expect(result.classification.category).toBe('medical');
+    expect(result.classification.severity).toBe('critical');
+  });
+
   it('should return matches: false for ambiguous inputs that require LLM fallback', () => {
     const report = 'The ticket scanner is functioning, but the volunteer is feeling slightly tired.';
     const result = classifyIncidentRules(report);

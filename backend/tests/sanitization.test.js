@@ -9,10 +9,15 @@ describe('Sanitization & Validation Logic', () => {
       expect(sanitizeText(input)).toBe(expected);
     });
 
-    it('should strip complex nested HTML tags', () => {
-      const input = '<div class="alert"><span onclick="hack()">Warning</span></div>';
+    it('should strip complex nested HTML tags and attributes', () => {
+      const input = '<div class="alert" data-test="123"><span onclick="hack(\'test\')">Warning</span></div>';
       const expected = 'Warning';
       expect(sanitizeText(input)).toBe(expected);
+    });
+
+    it('should strip broken or unclosed HTML tags safely', () => {
+      const input = 'Incident report <iframe src="http://evil.com"';
+      expect(sanitizeText(input)).not.toContain('<iframe');
     });
 
     it('should trim surrounding whitespace', () => {
@@ -24,6 +29,7 @@ describe('Sanitization & Validation Logic', () => {
       expect(sanitizeText(null)).toBe('');
       expect(sanitizeText(undefined)).toBe('');
       expect(sanitizeText(123)).toBe('');
+      expect(sanitizeText({})).toBe('');
     });
   });
 
@@ -32,17 +38,22 @@ describe('Sanitization & Validation Logic', () => {
       expect(validateLength('Short text', 50)).toBe(true);
     });
 
-    it('should return false for empty string', () => {
-      expect(validateLength('', 50)).toBe(false);
+    it('should validate exact boundary length values', () => {
+      const exact500 = 'A'.repeat(500);
+      const exact501 = 'A'.repeat(501);
+      
+      expect(validateLength(exact500, 500)).toBe(true);
+      expect(validateLength(exact501, 500)).toBe(false);
     });
 
-    it('should return false for string exceeding maximum length', () => {
-      expect(validateLength('A very long string that goes on and on', 10)).toBe(false);
+    it('should return false for empty string', () => {
+      expect(validateLength('', 50)).toBe(false);
     });
 
     it('should return false for non-string values', () => {
       expect(validateLength(null, 50)).toBe(false);
       expect(validateLength(undefined, 50)).toBe(false);
+      expect(validateLength(100, 50)).toBe(false);
     });
   });
 });

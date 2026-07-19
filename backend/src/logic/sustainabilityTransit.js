@@ -4,13 +4,15 @@
  * @param {'pre-match' | 'live' | 'halftime' | 'post-match'} phase - Current tournament match phase
  * @param {Array<{ id: string, name: string, occupancy: number, status: string }>} gateAdvisories - Analyzed gate status array
  * @returns {{
+ *   phase: string,
  *   sustainability: { level: 'normal' | 'warning' | 'high-surge', wasteBinFocus: string, recyclingRatio: number, recommendation: string, reasoning: string },
  *   transportation: { shuttleStatus: 'standby' | 'active' | 'peak-frequency', primaryHub: string, transitAction: string, reasoning: string }
  * }}
  */
 export function computeSustainabilityTransitAdvisory(phase = 'pre-match', gateAdvisories = []) {
   const normalizedPhase = (phase || 'pre-match').toLowerCase();
-  const criticalOrWarningGates = gateAdvisories.filter(g => g.status === 'critical' || g.status === 'warning');
+  const safeGates = Array.isArray(gateAdvisories) ? gateAdvisories : [];
+  const criticalOrWarningGates = safeGates.filter(g => g && (g.status === 'critical' || g.status === 'warning'));
 
   const sustainability = calculateSustainabilityAdvisory(normalizedPhase, criticalOrWarningGates);
   const transportation = calculateTransportationAdvisory(normalizedPhase, criticalOrWarningGates);
@@ -26,10 +28,10 @@ export function computeSustainabilityTransitAdvisory(phase = 'pre-match', gateAd
  * Calculates sustainability and waste management metrics.
  * 
  * @param {string} phase 
- * @param {Array<object>} highLoadGates 
+ * @param {Array<object>} _highLoadGates 
  * @returns {object}
  */
-function calculateSustainabilityAdvisory(phase, highLoadGates) {
+function calculateSustainabilityAdvisory(phase, _highLoadGates) {
   switch (phase) {
     case 'halftime':
       return {
@@ -75,8 +77,8 @@ function calculateSustainabilityAdvisory(phase, highLoadGates) {
  * @returns {object}
  */
 function calculateTransportationAdvisory(phase, highLoadGates) {
-  const gateAlertActive = highLoadGates.length > 0;
-  const gateNames = highLoadGates.map(g => g.name).join(', ');
+  const gateAlertActive = Array.isArray(highLoadGates) && highLoadGates.length > 0;
+  const gateNames = gateAlertActive ? highLoadGates.map(g => g.name).join(', ') : '';
 
   switch (phase) {
     case 'post-match':

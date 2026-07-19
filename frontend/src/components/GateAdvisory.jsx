@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchGates, updateGateOccupancy } from '../api/client.js';
 
 export default function GateAdvisory() {

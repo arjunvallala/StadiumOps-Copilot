@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchShiftSuggestions, fetchSustainabilityTransit } from '../api/client.js';
 
 export default function ShiftSuggestions() {

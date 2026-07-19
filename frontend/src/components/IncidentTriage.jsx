@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { submitIncident, fetchIncidents } from '../api/client.js';
 
 export default function IncidentTriage() {
@@ -103,7 +103,7 @@ export default function IncidentTriage() {
                 onClick={() => setReportText(preset)}
                 className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors text-left"
               >
-                "{preset.length > 35 ? preset.substring(0, 35) + '...' : preset}"
+                &quot;{preset.length > 35 ? preset.substring(0, 35) + '...' : preset}&quot;
               </button>
             ))}
           </div>
@@ -222,7 +222,7 @@ export default function IncidentTriage() {
                 </div>
 
                 <p className="text-sm font-medium text-slate-100">
-                  "{item.rawText}"
+                  &quot;{item.rawText}&quot;
                 </p>
 
                 {/* Action Box */}
