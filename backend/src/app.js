@@ -21,7 +21,7 @@ let incidentsStore = [...initialIncidents];
 
 /**
  * Helper to apply subtle dynamic fluctuations for telemetry simulation
- * @returns {Array<object>}
+ * @returns {Array<import('./logic/utils.js').GateData>}
  */
 function getFluctuatedGates() {
   gatesStore = gatesStore.map(gate => {
@@ -35,6 +35,17 @@ function getFluctuatedGates() {
     };
   });
   return gatesStore;
+}
+
+/**
+ * Sends a standardized API error response.
+ * @param {import('express').Response} res 
+ * @param {number} status 
+ * @param {string} error 
+ * @param {string} code 
+ */
+function sendApiError(res, status, error, code) {
+  return res.status(status).json({ success: false, error, code });
 }
 
 // Router containing all API routes
@@ -56,16 +67,15 @@ router.post('/incident/triage', async (req, res) => {
     const { text } = req.body;
 
     if (!text || typeof text !== 'string') {
-      return res.status(400).json({ success: false, error: 'Report text is required and must be a string.' });
+      return sendApiError(res, 400, 'Report text is required and must be a string.', 'INVALID_INPUT');
     }
 
     const sanitized = sanitizeText(text);
 
     if (!validateLength(sanitized, 500)) {
-      return res.status(400).json({ success: false, error: 'Report text must be between 1 and 500 characters long.' });
+      return sendApiError(res, 400, 'Report text must be between 1 and 500 characters long.', 'INVALID_INPUT');
     }
 
-    // Step 1: Hybrid approach - Check deterministic rules FIRST
     const ruleResult = classifyIncidentRules(sanitized);
 
     let classification;
@@ -74,7 +84,6 @@ router.post('/incident/triage', async (req, res) => {
     if (ruleResult.matches) {
       classification = ruleResult.classification;
     } else {
-      // Step 2: Fallback to LLM for ambiguous cases
       source = 'llm-fallback';
       classification = await classifyAmbiguousIncident(sanitized);
     }
@@ -87,7 +96,6 @@ router.post('/incident/triage', async (req, res) => {
       timestamp: new Date().toISOString()
     };
 
-    // Prepend to store
     incidentsStore.unshift(newIncident);
 
     res.status(201).json({
@@ -97,7 +105,7 @@ router.post('/incident/triage', async (req, res) => {
 
   } catch (err) {
     console.error('Error processing triage request:', err);
-    res.status(500).json({ success: false, error: 'Internal server error processing triage.' });
+    sendApiError(res, 500, 'Internal server error processing triage.', 'INTERNAL_ERROR');
   }
 });
 
@@ -113,7 +121,7 @@ router.get('/gates', (req, res) => {
     });
   } catch (err) {
     console.error('Error analyzing gates:', err);
-    res.status(500).json({ success: false, error: 'Failed to retrieve gate advisories.' });
+    sendApiError(res, 500, 'Failed to retrieve gate advisories.', 'INTERNAL_ERROR');
   }
 });
 
@@ -122,12 +130,12 @@ router.post('/gates/update', (req, res) => {
   try {
     const { id, occupancy } = req.body;
     if (!id || typeof occupancy !== 'number') {
-      return res.status(400).json({ success: false, error: 'Valid gate id and numeric occupancy percentage required.' });
+      return sendApiError(res, 400, 'Valid gate id and numeric occupancy percentage required.', 'INVALID_INPUT');
     }
 
     const gateIndex = gatesStore.findIndex(g => g.id === id);
     if (gateIndex === -1) {
-      return res.status(404).json({ success: false, error: 'Gate not found.' });
+      return sendApiError(res, 404, 'Gate not found.', 'NOT_FOUND');
     }
 
     gatesStore[gateIndex].occupancy = Math.max(0, Math.min(100, occupancy));
@@ -136,7 +144,7 @@ router.post('/gates/update', (req, res) => {
     const updatedAdvisories = analyzeGateAdvisories(gatesStore);
     res.json({ success: true, data: updatedAdvisories });
   } catch (err) {
-    res.status(500).json({ success: false, error: 'Failed to update gate metric.' });
+    sendApiError(res, 500, 'Failed to update gate metric.', 'INTERNAL_ERROR');
   }
 });
 
@@ -146,14 +154,14 @@ router.post('/translate', async (req, res) => {
     const { text, targetLanguage } = req.body;
 
     if (!text || !targetLanguage) {
-      return res.status(400).json({ success: false, error: 'Text and targetLanguage are required.' });
+      return sendApiError(res, 400, 'Text and targetLanguage are required.', 'INVALID_INPUT');
     }
 
     const sanitizedText = sanitizeText(text);
     const sanitizedLang = sanitizeText(targetLanguage);
 
     if (!validateLength(sanitizedText, 250)) {
-      return res.status(400).json({ success: false, error: 'Text to translate must be between 1 and 250 characters.' });
+      return sendApiError(res, 400, 'Text to translate must be between 1 and 250 characters.', 'INVALID_INPUT');
     }
 
     const result = await translateText(sanitizedText, sanitizedLang);
@@ -167,7 +175,7 @@ router.post('/translate', async (req, res) => {
 
   } catch (err) {
     console.error('Error translating text:', err);
-    res.status(500).json({ success: false, error: 'Failed to process translation request.' });
+    sendApiError(res, 500, 'Failed to process translation request.', 'INTERNAL_ERROR');
   }
 });
 
@@ -185,7 +193,7 @@ router.get('/shifts', (req, res) => {
     });
   } catch (err) {
     console.error('Error computing shift suggestions:', err);
-    res.status(500).json({ success: false, error: 'Failed to generate shift suggestions.' });
+    sendApiError(res, 500, 'Failed to generate shift suggestions.', 'INTERNAL_ERROR');
   }
 });
 
@@ -203,7 +211,7 @@ router.get('/sustainability-transit', (req, res) => {
     });
   } catch (err) {
     console.error('Error computing sustainability & transit advisories:', err);
-    res.status(500).json({ success: false, error: 'Failed to generate sustainability & transit advisories.' });
+    sendApiError(res, 500, 'Failed to generate sustainability & transit advisories.', 'INTERNAL_ERROR');
   }
 });
 
