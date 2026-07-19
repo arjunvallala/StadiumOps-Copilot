@@ -1,0 +1,37 @@
+[
+  {
+    "id": "gate-a",
+    "name": "Gate A (North Entrance)",
+    "occupancy": 65,
+    "capacity": 10000,
+    "trend": "rising"
+  },
+  {
+    "id": "gate-b",
+    "name": "Gate B (South Entrance)",
+    "occupancy": 92,
+    "capacity": 8000,
+    "trend": "rising"
+  },
+  {
+    "id": "gate-c",
+    "name": "Gate C (East Entrance)",
+    "occupancy": 45,
+    "capacity": 12000,
+    "trend": "falling"
+  },
+  {
+    "id": "gate-d",
+    "name": "Gate D (West Entrance)",
+    "occupancy": 78,
+    "capacity": 9000,
+    "trend": "stable"
+  },
+  {
+    "id": "gate-e",
+    "name": "Gate E (VIP/Media Entrance)",
+    "occupancy": 30,
+    "capacity": 3000,
+    "trend": "stable"
+  }
+]
