@@ -1,8 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 import { sanitizeText, validateLength } from './logic/sanitization.js';
 import { classifyIncidentRules } from './logic/incidentClassifier.js';
@@ -10,8 +7,9 @@ import { analyzeGateAdvisories } from './logic/gateAdvisory.js';
 import { getShiftSuggestions } from './logic/shiftSuggestions.js';
 import { classifyAmbiguousIncident, translateText } from './services/llm.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Static JSON imports - bundled directly into serverless builds
+import initialGates from './data/gates.json' assert { type: 'json' };
+import initialIncidents from './data/incidents.json' assert { type: 'json' };
 
 const app = express();
 
@@ -27,19 +25,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Load initial mock datasets into memory
-const initialGatesPath = path.join(__dirname, 'data', 'gates.json');
-const initialIncidentsPath = path.join(__dirname, 'data', 'incidents.json');
+// Memory stores initialized from bundled JSON
+let gatesStore = Array.isArray(initialGates) ? [...initialGates] : [];
+let incidentsStore = Array.isArray(initialIncidents) ? [...initialIncidents] : [];
 
-let gatesStore = JSON.parse(fs.readFileSync(initialGatesPath, 'utf8'));
-let incidentsStore = JSON.parse(fs.readFileSync(initialIncidentsPath, 'utf8'));
-
-// Background timer to simulate dynamic sensor shifts in gate occupancy
-setInterval(() => {
+// Helper to apply subtle dynamic fluctuations for telemetry simulation
+function getFluctuatedGates() {
   gatesStore = gatesStore.map(gate => {
-    // Random subtle fluctuation (-3% to +3%)
-    const delta = Math.floor(Math.random() * 7) - 3;
-    let newOccupancy = Math.max(10, Math.min(100, gate.occupancy + delta));
+    const delta = Math.floor(Math.random() * 5) - 2; // -2% to +2% shift
+    let newOccupancy = Math.max(15, Math.min(98, gate.occupancy + delta));
     let newTrend = delta > 0 ? 'rising' : delta < 0 ? 'falling' : 'stable';
     return {
       ...gate,
@@ -47,7 +41,8 @@ setInterval(() => {
       trend: newTrend
     };
   });
-}, 15000); // Fluctuate every 15 seconds
+  return gatesStore;
+}
 
 // ROUTES
 
@@ -115,7 +110,8 @@ app.post('/api/incident/triage', async (req, res) => {
 // GET /api/gates - Get real-time crowd advisory data for all gates
 app.get('/api/gates', (req, res) => {
   try {
-    const advisories = analyzeGateAdvisories(gatesStore);
+    const updatedGates = getFluctuatedGates();
+    const advisories = analyzeGateAdvisories(updatedGates);
     res.json({
       success: true,
       timestamp: new Date().toISOString(),
