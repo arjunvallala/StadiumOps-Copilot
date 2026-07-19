@@ -5,6 +5,7 @@ import { sanitizeText, validateLength } from './logic/sanitization.js';
 import { classifyIncidentRules } from './logic/incidentClassifier.js';
 import { analyzeGateAdvisories } from './logic/gateAdvisory.js';
 import { getShiftSuggestions } from './logic/shiftSuggestions.js';
+import { computeSustainabilityTransitAdvisory } from './logic/sustainabilityTransit.js';
 import { classifyAmbiguousIncident, translateText } from './services/llm.js';
 import { initialGates, initialIncidents } from './data/initialData.js';
 
@@ -18,7 +19,10 @@ app.use(express.json({ limit: '50kb' })); // Restrict payload size
 let gatesStore = [...initialGates];
 let incidentsStore = [...initialIncidents];
 
-// Helper to apply subtle dynamic fluctuations for telemetry simulation
+/**
+ * Helper to apply subtle dynamic fluctuations for telemetry simulation
+ * @returns {Array<object>}
+ */
 function getFluctuatedGates() {
   gatesStore = gatesStore.map(gate => {
     const delta = Math.floor(Math.random() * 5) - 2; // -2% to +2% shift
@@ -36,7 +40,7 @@ function getFluctuatedGates() {
 // Router containing all API routes
 const router = express.Router();
 
-// Health Check
+// GET /health - System health check
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -182,6 +186,24 @@ router.get('/shifts', (req, res) => {
   } catch (err) {
     console.error('Error computing shift suggestions:', err);
     res.status(500).json({ success: false, error: 'Failed to generate shift suggestions.' });
+  }
+});
+
+// GET /sustainability-transit - Retrieve sustainability & transportation advisories
+router.get('/sustainability-transit', (req, res) => {
+  try {
+    const phase = req.query.phase || 'pre-match';
+    const advisories = analyzeGateAdvisories(gatesStore);
+    const result = computeSustainabilityTransitAdvisory(phase, advisories);
+    
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: result
+    });
+  } catch (err) {
+    console.error('Error computing sustainability & transit advisories:', err);
+    res.status(500).json({ success: false, error: 'Failed to generate sustainability & transit advisories.' });
   }
 });
 
